@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS departments (
 
 CREATE TABLE IF NOT EXISTS employees (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    employee_number VARCHAR(10) NOT NULL UNIQUE,
+    employee_number VARCHAR(10) NOT NULL UNIQUE DEFAULT '',
     name VARCHAR(100) NOT NULL,
     position VARCHAR(50) NOT NULL,
     department_id INT NOT NULL,
@@ -187,7 +187,7 @@ BEGIN
     DECLARE emp_name VARCHAR(100);
     DECLARE emp_pos VARCHAR(50);
     DECLARE hire_date DATE;
-    DECLARE dept_prefix VARCHAR(2);
+    DECLARE dept_prefix CHAR(2);
     
     WHILE i <= 1000 DO
         -- Select a random department
@@ -204,8 +204,7 @@ BEGIN
             WHEN dept_id BETWEEN 7000 AND 7999 THEN 'FA'
             WHEN dept_id BETWEEN 8000 AND 8999 THEN 'QC'
             WHEN dept_id BETWEEN 9000 AND 9999 THEN 'IB'
-            WHEN dept_id = 10000 THEN 'SP'
-            ELSE 'EMP'
+            ELSE 'SP'
         END;
         
         SET emp_num = CONCAT(dept_prefix, LPAD(i, 4, '0'));
