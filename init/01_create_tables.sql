@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS employees (
     position VARCHAR(50) NOT NULL,
     department_id INT NOT NULL,
     hire_date DATE NOT NULL,
+    large_text LONGTEXT,
     FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
@@ -163,105 +164,97 @@ INSERT INTO departments (id, name, parent_id) VALUES
 (9710, 'Investment Management 1 Team', 9700),
 (9720, 'Investment Management 2 Team', 9700);
 
--- Create employees (1000 employees distributed across departments)
-INSERT INTO employees (employee_number, name, position, department_id, hire_date) VALUES
--- Management Support Division (100 employees)
-('MS001', 'John Smith', 'Manager', 1000, '2020-01-01'),
-('MS002', 'Sarah Johnson', 'Senior Staff', 900, '2020-02-15'),
-('MS003', 'Michael Brown', 'Staff', 910, '2020-03-01'),
-('MS004', 'Emily Davis', 'Staff', 920, '2020-04-15'),
-('MS005', 'David Wilson', 'Senior Staff', 800, '2020-05-01'),
-('MS006', 'Lisa Anderson', 'Staff', 810, '2020-06-15'),
-('MS007', 'Robert Taylor', 'Staff', 820, '2020-07-01'),
-('MS008', 'Jennifer Martinez', 'Senior Staff', 700, '2020-08-15'),
-('MS009', 'William Thomas', 'Staff', 710, '2020-09-01'),
-('MS010', 'Patricia Garcia', 'Staff', 720, '2020-10-15');
-
--- Add more employees to reach 1000 (using a stored procedure)
+-- Add more employees to reach 100000 (using a stored procedure)
 DELIMITER //
 CREATE PROCEDURE AddMoreEmployees()
 BEGIN
-    DECLARE i INT DEFAULT 11;
+    DECLARE done INT DEFAULT FALSE;
     DECLARE dept_id INT;
-    DECLARE emp_num VARCHAR(10);
-    DECLARE emp_name VARCHAR(100);
-    DECLARE emp_pos VARCHAR(50);
-    DECLARE hire_date DATE;
-    DECLARE dept_prefix CHAR(2);
+    DECLARE dept_name VARCHAR(100);
+    DECLARE dept_prefix VARCHAR(10);
+    DECLARE i INT;
     
-    WHILE i <= 1000 DO
-        -- Select a random department
-        SELECT id INTO dept_id FROM departments ORDER BY RAND() LIMIT 1;
+    -- 부서별 접두사 설정
+    DECLARE dept_prefixes CURSOR FOR 
+        SELECT id, name,
+            CASE 
+                WHEN id = 1000 THEN 'MS'  -- Management Support
+                WHEN id = 2000 THEN 'SD'  -- Sales Division
+                WHEN id = 3000 THEN 'PD'  -- Production Division
+                WHEN id = 4000 THEN 'RD'  -- R&D Division
+                WHEN id = 5000 THEN 'IT'  -- IT Division
+                WHEN id = 6000 THEN 'HR'  -- HR Division
+                WHEN id = 7000 THEN 'FA'  -- Finance & Accounting
+                WHEN id = 8000 THEN 'QC'  -- Quality Control
+                WHEN id = 9000 THEN 'IB'  -- International Business
+                WHEN id = 10000 THEN 'SP' -- Strategic Planning
+                ELSE CONCAT('D', LPAD(SUBSTRING(id, 1, 2), 2, '0'))
+            END as prefix
+        FROM departments;
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    OPEN dept_prefixes;
+    
+    read_loop: LOOP
+        FETCH dept_prefixes INTO dept_id, dept_name, dept_prefix;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
         
-        -- Generate employee number based on department
-        SET dept_prefix = CASE
-            WHEN dept_id BETWEEN 1000 AND 1999 THEN 'MS'
-            WHEN dept_id BETWEEN 2000 AND 2999 THEN 'SL'
-            WHEN dept_id BETWEEN 3000 AND 3999 THEN 'PD'
-            WHEN dept_id BETWEEN 4000 AND 4999 THEN 'RD'
-            WHEN dept_id BETWEEN 5000 AND 5999 THEN 'IT'
-            WHEN dept_id BETWEEN 6000 AND 6999 THEN 'HR'
-            WHEN dept_id BETWEEN 7000 AND 7999 THEN 'FA'
-            WHEN dept_id BETWEEN 8000 AND 8999 THEN 'QC'
-            WHEN dept_id BETWEEN 9000 AND 9999 THEN 'IB'
-            ELSE 'SP'
-        END;
-        
-        SET emp_num = CONCAT(dept_prefix, LPAD(i, 4, '0'));
-        
-        -- Generate random name
-        SET emp_name = CONCAT(
-            CASE FLOOR(RAND() * 10)
-                WHEN 0 THEN 'James'
-                WHEN 1 THEN 'Mary'
-                WHEN 2 THEN 'John'
-                WHEN 3 THEN 'Patricia'
-                WHEN 4 THEN 'Robert'
-                WHEN 5 THEN 'Linda'
-                WHEN 6 THEN 'Michael'
-                WHEN 7 THEN 'Barbara'
-                WHEN 8 THEN 'William'
-                ELSE 'Elizabeth'
-            END,
-            ' ',
-            CASE FLOOR(RAND() * 10)
-                WHEN 0 THEN 'Smith'
-                WHEN 1 THEN 'Johnson'
-                WHEN 2 THEN 'Williams'
-                WHEN 3 THEN 'Brown'
-                WHEN 4 THEN 'Jones'
-                WHEN 5 THEN 'Garcia'
-                WHEN 6 THEN 'Miller'
-                WHEN 7 THEN 'Davis'
-                WHEN 8 THEN 'Rodriguez'
-                ELSE 'Martinez'
-            END
-        );
-        
-        -- Generate random position
-        SET emp_pos = CASE FLOOR(RAND() * 5)
-            WHEN 0 THEN 'Manager'
-            WHEN 1 THEN 'Senior Staff'
-            WHEN 2 THEN 'Staff'
-            WHEN 3 THEN 'Assistant'
-            ELSE 'Intern'
-        END;
-        
-        -- Generate random hire date between 2020-01-01 and 2024-12-31
-        SET hire_date = DATE_ADD('2020-01-01', 
-            INTERVAL FLOOR(RAND() * DATEDIFF('2024-12-31', '2020-01-01')) DAY);
-        
-        -- Insert the employee
-        INSERT INTO employees (employee_number, name, position, department_id, hire_date)
-        VALUES (emp_num, emp_name, emp_pos, dept_id, hire_date);
-        
-        SET i = i + 1;
-    END WHILE;
+        -- 각 부서에 100명의 직원 추가
+        SET i = 1;
+        WHILE i <= 100 DO
+            INSERT INTO employees (
+                name, 
+                department_id, 
+                position, 
+                hire_date, 
+                employee_number,
+                large_text
+            ) VALUES (
+                CONCAT(dept_name, ' 직원 ', i),
+                dept_id,
+                CASE 
+                    WHEN i <= 5 THEN '부장'
+                    WHEN i <= 15 THEN '차장'
+                    WHEN i <= 30 THEN '과장'
+                    WHEN i <= 50 THEN '대리'
+                    ELSE '사원'
+                END,
+                DATE_ADD('2020-01-01', INTERVAL FLOOR(RAND() * 1000) DAY),
+                CONCAT(dept_prefix, LPAD(SUBSTRING(dept_id, -2), 2, '0'), LPAD(i, 3, '0')),
+                REPEAT(CONCAT('직원번호: ', CONCAT(dept_prefix, LPAD(SUBSTRING(dept_id, -2), 2, '0'), LPAD(i, 3, '0')), 
+                       ', 부서: ', dept_name, 
+                       ', 직위: ', 
+                       CASE 
+                           WHEN i <= 5 THEN '부장'
+                           WHEN i <= 15 THEN '차장'
+                           WHEN i <= 30 THEN '과장'
+                           WHEN i <= 50 THEN '대리'
+                           ELSE '사원'
+                       END, 
+                       ', 입사일: ', 
+                       DATE_FORMAT(DATE_ADD('2020-01-01', INTERVAL FLOOR(RAND() * 1000) DAY), '%Y-%m-%d')), 1000)
+            );
+            SET i = i + 1;
+        END WHILE;
+    END LOOP;
+    
+    CLOSE dept_prefixes;
 END //
 DELIMITER ;
 
--- Execute the stored procedure
+-- 저장 프로시저 실행
 CALL AddMoreEmployees();
+DROP PROCEDURE IF EXISTS AddMoreEmployees;
 
--- Drop the stored procedure
-DROP PROCEDURE IF EXISTS AddMoreEmployees; 
+-- Verify the data
+SELECT 
+    d.id as dept_id,
+    d.name as dept_name,
+    COUNT(e.id) as employee_count
+FROM departments d
+LEFT JOIN employees e ON d.id = e.department_id
+GROUP BY d.id, d.name
+ORDER BY d.id; 

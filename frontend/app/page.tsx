@@ -29,6 +29,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDepartmentManager, setShowDepartmentManager] = useState(false);
+  const [apiCallTime, setApiCallTime] = useState<number | null>(null);
+  const [renderTime, setRenderTime] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,11 +52,16 @@ export default function Home() {
     const fetchDepartmentEmployees = async () => {
       if (!selectedDepartmentId) {
         setDepartmentEmployees([]);
+        setApiCallTime(null);
+        setRenderTime(null);
         return;
       }
 
+      const startTime = performance.now();
       try {
         const employees = await getDepartmentEmployees(selectedDepartmentId);
+        const apiEndTime = performance.now();
+        setApiCallTime(apiEndTime - startTime);
         setDepartmentEmployees(employees);
       } catch (err) {
         setError(
@@ -62,11 +69,24 @@ export default function Home() {
             ? err.message
             : "Failed to fetch department employees"
         );
+        setApiCallTime(null);
+        setRenderTime(null);
       }
     };
 
     fetchDepartmentEmployees();
   }, [selectedDepartmentId]);
+
+  useEffect(() => {
+    if (departmentEmployees.length > 0) {
+      const renderStartTime = performance.now();
+      // 렌더링이 완료된 후 시간 측정
+      requestAnimationFrame(() => {
+        const renderEndTime = performance.now();
+        setRenderTime(renderEndTime - renderStartTime);
+      });
+    }
+  }, [departmentEmployees]);
 
   const handleAddEmployee = async (employee: Omit<Employee, "id">) => {
     try {
@@ -203,7 +223,17 @@ export default function Home() {
           <div>
             <h2 className="text-2xl font-semibold mb-4">
               {selectedDepartmentId
-                ? `직원 목록 (부서 ID: ${selectedDepartmentId})`
+                ? `직원 목록 (부서 ID: ${selectedDepartmentId})${
+                    apiCallTime || renderTime
+                      ? ` - API 호출: ${
+                          apiCallTime?.toFixed(2) ?? "-"
+                        }ms, 렌더링: ${renderTime?.toFixed(2) ?? "-"}ms${
+                          apiCallTime && renderTime
+                            ? `, 총: ${(apiCallTime + renderTime).toFixed(2)}ms`
+                            : ""
+                        }`
+                      : ""
+                  }`
                 : "직원 목록"}
             </h2>
             <div className="bg-white rounded-lg shadow p-4">

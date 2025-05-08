@@ -48,17 +48,22 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-        restart: true
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USER=root
       - DB_PASSWORD=rootpassword
       - DB_NAME=mydatabase
-      - DB_RETRY_INTERVAL=5
-      - DB_MAX_RETRIES=10
+      - DB_RETRY_INTERVAL=10
+      - DB_MAX_RETRIES=30
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   frontend:
     build:
