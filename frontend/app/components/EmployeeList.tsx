@@ -23,13 +23,27 @@ export default function EmployeeList({
   const [newEmployee, setNewEmployee] = useState<Omit<Employee, "id">>({
     name: "",
     department_id: departmentId || 0,
+    employee_number: "",
+    position: "",
+    hire_date: new Date().toISOString().split("T")[0],
   });
 
   const handleAdd = async () => {
-    if (!newEmployee.name.trim()) return;
+    if (
+      !newEmployee.name.trim() ||
+      !newEmployee.employee_number.trim() ||
+      !newEmployee.position.trim()
+    )
+      return;
     try {
       await onAdd?.(newEmployee);
-      setNewEmployee({ name: "", department_id: departmentId || 0 });
+      setNewEmployee({
+        name: "",
+        department_id: departmentId || 0,
+        employee_number: "",
+        position: "",
+        hire_date: new Date().toISOString().split("T")[0],
+      });
       setIsAdding(false);
     } catch (error) {
       console.error("Failed to add employee:", error);
@@ -73,11 +87,40 @@ export default function EmployeeList({
           <div className="space-y-2">
             <input
               type="text"
+              value={newEmployee.employee_number}
+              onChange={(e) =>
+                setNewEmployee({
+                  ...newEmployee,
+                  employee_number: e.target.value,
+                })
+              }
+              placeholder="사번"
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
               value={newEmployee.name}
               onChange={(e) =>
                 setNewEmployee({ ...newEmployee, name: e.target.value })
               }
               placeholder="직원 이름"
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="text"
+              value={newEmployee.position}
+              onChange={(e) =>
+                setNewEmployee({ ...newEmployee, position: e.target.value })
+              }
+              placeholder="직위"
+              className="w-full px-3 py-2 border rounded"
+            />
+            <input
+              type="date"
+              value={newEmployee.hire_date}
+              onChange={(e) =>
+                setNewEmployee({ ...newEmployee, hire_date: e.target.value })
+              }
               className="w-full px-3 py-2 border rounded"
             />
             <div className="flex justify-end space-x-2">
@@ -108,8 +151,35 @@ export default function EmployeeList({
               <div className="space-y-2">
                 <input
                   type="text"
+                  value={emp.employee_number}
+                  onChange={(e) =>
+                    handleEdit({ ...emp, employee_number: e.target.value })
+                  }
+                  placeholder="사번"
+                  className="w-full px-3 py-2 border rounded"
+                />
+                <input
+                  type="text"
                   value={emp.name}
                   onChange={(e) => handleEdit({ ...emp, name: e.target.value })}
+                  placeholder="직원 이름"
+                  className="w-full px-3 py-2 border rounded"
+                />
+                <input
+                  type="text"
+                  value={emp.position}
+                  onChange={(e) =>
+                    handleEdit({ ...emp, position: e.target.value })
+                  }
+                  placeholder="직위"
+                  className="w-full px-3 py-2 border rounded"
+                />
+                <input
+                  type="date"
+                  value={emp.hire_date}
+                  onChange={(e) =>
+                    handleEdit({ ...emp, hire_date: e.target.value })
+                  }
                   className="w-full px-3 py-2 border rounded"
                 />
                 <div className="flex justify-end space-x-2">
@@ -119,6 +189,12 @@ export default function EmployeeList({
                   >
                     취소
                   </button>
+                  <button
+                    onClick={() => handleEdit(emp)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    저장
+                  </button>
                 </div>
               </div>
             ) : (
@@ -127,6 +203,10 @@ export default function EmployeeList({
                   <div className="font-medium">{emp.name}</div>
                   <div className="text-sm text-gray-500">
                     ID: {emp.id} | 부서 ID: {emp.department_id}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    사번: {emp.employee_number} | 직위: {emp.position} | 입사일:{" "}
+                    {emp.hire_date}
                   </div>
                 </div>
                 <div className="flex space-x-2">

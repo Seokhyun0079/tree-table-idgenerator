@@ -143,7 +143,29 @@ func getDepartment(c *gin.Context) {
 // 특정 부서의 직원 목록 조회
 func getDepartmentEmployees(c *gin.Context) {
 	deptID := c.Param("id")
-	rows, err := db.Query("SELECT id, name, department_id FROM employees WHERE department_id = ?", deptID)
+	
+	// 재귀적으로 하위 부서 ID들을 가져오는 쿼리
+	query := `
+		WITH RECURSIVE subdepartments AS (
+			-- 기본 부서
+			SELECT id, parent_id
+			FROM departments
+			WHERE id = ?
+			
+			UNION ALL
+			
+			-- 하위 부서들
+			SELECT d.id, d.parent_id
+			FROM departments d
+			INNER JOIN subdepartments sd ON d.parent_id = sd.id
+		)
+		SELECT e.id, e.name, e.department_id, e.position, e.hire_date, e.employee_number
+		FROM employees e
+		INNER JOIN subdepartments sd ON e.department_id = sd.id
+		ORDER BY e.department_id, e.name
+	`
+	
+	rows, err := db.Query(query, deptID)
 	if err != nil {
 		log.Printf("Error querying department employees: %v", err)
 		c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to query department employees: %v", err)})
@@ -154,16 +176,20 @@ func getDepartmentEmployees(c *gin.Context) {
 	var employees []gin.H
 	for rows.Next() {
 		var id, deptID int
-		var name string
-		if err := rows.Scan(&id, &name, &deptID); err != nil {
+		var name, position, employeeNumber string
+		var hireDate string
+		if err := rows.Scan(&id, &name, &deptID, &position, &hireDate, &employeeNumber); err != nil {
 			log.Printf("Error scanning employee row: %v", err)
 			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to scan employee row: %v", err)})
 			return
 		}
 		employees = append(employees, gin.H{
-			"id":            id,
-			"name":          name,
-			"department_id": deptID,
+			"id":             id,
+			"name":           name,
+			"department_id":  deptID,
+			"position":       position,
+			"hire_date":      hireDate,
+			"employee_number": employeeNumber,
 		})
 	}
 
