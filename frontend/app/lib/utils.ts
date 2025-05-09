@@ -1,4 +1,4 @@
-import { Department } from '../types';
+import { Department, Employee } from '../types';
 
 export interface DepartmentNode extends Department {
   children: DepartmentNode[];
@@ -21,12 +21,15 @@ export function buildDepartmentTree(departments: Department[]): DepartmentNode[]
   // 부서 트리 구조 생성
   departments.forEach((dept) => {
     const node = departmentMap.get(dept.id)!;
-    if (!dept.parent_id) {
+    if (dept.parent_id === null) {
       rootDepartments.push(node);
     } else {
       const parent = departmentMap.get(dept.parent_id);
       if (parent) {
         parent.children.push(node);
+      } else {
+        // 부모가 없는 경우 루트로 추가
+        rootDepartments.push(node);
       }
     }
   });
@@ -56,7 +59,7 @@ export function findEmployeesInDepartmentTree(
   departments: Department[],
   employees: Employee[],
   targetDepartmentId: number
-): Employee[] {
+): Department[] {
   const departmentMap = new Map<number, Department>();
   const childDepartments = new Map<number, number[]>();
 
@@ -84,6 +87,6 @@ export function findEmployeesInDepartmentTree(
   // 대상 부서와 모든 하위 부서의 ID 수집
   const allDepartmentIds = getAllChildDepartmentIds(targetDepartmentId);
 
-  // 해당 부서들의 모든 직원 반환
-  return employees.filter(emp => allDepartmentIds.includes(emp.department_id));
+  // 해당 부서들의 모든 부서 객체 반환
+  return departments.filter(dept => allDepartmentIds.includes(dept.id));
 } 

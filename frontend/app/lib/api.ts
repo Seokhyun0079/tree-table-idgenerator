@@ -57,8 +57,8 @@ export async function deleteDepartment(id: number): Promise<void> {
 }
 
 // 직원 관련 API
-export async function getEmployees(): Promise<Employee[]> {
-  const response = await fetch(`${API_BASE_URL}/employees`);
+export async function getEmployees(page: number = 1, pageSize: number = 100): Promise<Employee[]> {
+  const response = await fetch(`${API_BASE_URL}/employees?page=${page}&pageSize=${pageSize}`);
   if (!response.ok) {
     throw new Error('Failed to fetch employees');
   }
@@ -116,4 +116,18 @@ export async function deleteEmployee(id: number): Promise<void> {
   if (!response.ok) {
     throw new Error('Failed to delete employee');
   }
+}
+
+export async function getEmployeesByDepartmentIDs(departmentIds: number[]): Promise<Employee[]> {
+  const response = await fetch(`${API_BASE_URL}/employees/by-departments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(departmentIds),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch employees by department IDs');
+  }
+  return response.json();
 } 

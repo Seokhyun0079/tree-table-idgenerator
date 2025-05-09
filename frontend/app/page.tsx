@@ -5,6 +5,7 @@ import { Department, Employee } from "./types";
 import {
   getDepartments,
   getDepartmentEmployees,
+  getEmployeesByDepartmentIDs,
   createEmployee,
   updateEmployee,
   deleteEmployee,
@@ -12,7 +13,11 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "./lib/api";
-import { buildDepartmentTree, DepartmentNode } from "./lib/utils";
+import {
+  buildDepartmentTree,
+  DepartmentNode,
+  findEmployeesInDepartmentTree,
+} from "./lib/utils";
 import DepartmentTree from "./components/DepartmentTree";
 import EmployeeList from "./components/EmployeeList";
 import DepartmentManager from "./components/DepartmentManager";
@@ -31,6 +36,7 @@ export default function Home() {
   const [showDepartmentManager, setShowDepartmentManager] = useState(false);
   const [apiCallTime, setApiCallTime] = useState<number | null>(null);
   const [renderTime, setRenderTime] = useState<number | null>(null);
+  const [useClientSideProcessing, setUseClientSideProcessing] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +52,7 @@ export default function Home() {
     };
 
     fetchData();
-  }, []);
+  }, [useClientSideProcessing]);
 
   useEffect(() => {
     const fetchDepartmentEmployees = async () => {
@@ -59,7 +65,20 @@ export default function Home() {
 
       const startTime = performance.now();
       try {
-        const employees = await getDepartmentEmployees(selectedDepartmentId);
+        let employees: Employee[];
+
+        if (useClientSideProcessing) {
+          // 하위 부서 ID 목록 수집
+          const departmentIds = findEmployeesInDepartmentTree(
+            departments,
+            [],
+            selectedDepartmentId
+          ).map((dept) => dept.id);
+          employees = await getEmployeesByDepartmentIDs(departmentIds);
+        } else {
+          employees = await getDepartmentEmployees(selectedDepartmentId);
+        }
+
         const apiEndTime = performance.now();
         setApiCallTime(apiEndTime - startTime);
         setDepartmentEmployees(employees);
@@ -75,7 +94,7 @@ export default function Home() {
     };
 
     fetchDepartmentEmployees();
-  }, [selectedDepartmentId]);
+  }, [selectedDepartmentId, useClientSideProcessing, departments]);
 
   useEffect(() => {
     if (departmentEmployees.length > 0) {
@@ -91,7 +110,9 @@ export default function Home() {
   const handleAddEmployee = async (employee: Omit<Employee, "id">) => {
     try {
       const newEmployee = await createEmployee(employee);
-      setDepartmentEmployees((prev) => [...prev, newEmployee]);
+      if (selectedDepartmentId === employee.department_id) {
+        setDepartmentEmployees((prev) => [...prev, newEmployee]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add employee");
     }
@@ -100,11 +121,13 @@ export default function Home() {
   const handleEditEmployee = async (employee: Employee) => {
     try {
       const updatedEmployee = await updateEmployee(employee);
-      setDepartmentEmployees((prev) =>
-        prev.map((emp) =>
-          emp.id === updatedEmployee.id ? updatedEmployee : emp
-        )
-      );
+      if (selectedDepartmentId === employee.department_id) {
+        setDepartmentEmployees((prev) =>
+          prev.map((emp) =>
+            emp.id === updatedEmployee.id ? updatedEmployee : emp
+          )
+        );
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to update employee"
@@ -188,12 +211,30 @@ export default function Home() {
     <main className="min-h-screen p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">조직도</h1>
-        <button
-          onClick={() => setShowDepartmentManager(!showDepartmentManager)}
-          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-        >
-          {showDepartmentManager ? "부서 관리 닫기" : "부서 관리"}
-        </button>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="processingMode" className="text-sm">
+              처리 방식:
+            </label>
+            <select
+              id="processingMode"
+              value={useClientSideProcessing ? "client" : "server"}
+              onChange={(e) =>
+                setUseClientSideProcessing(e.target.value === "client")
+              }
+              className="px-2 py-1 border rounded"
+            >
+              <option value="server">서버 측 처리</option>
+              <option value="client">클라이언트 측 처리</option>
+            </select>
+          </div>
+          <button
+            onClick={() => setShowDepartmentManager(!showDepartmentManager)}
+            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          >
+            {showDepartmentManager ? "부서 관리 닫기" : "부서 관리"}
+          </button>
+        </div>
       </div>
 
       {showDepartmentManager ? (

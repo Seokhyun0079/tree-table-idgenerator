@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +15,25 @@ import (
 )
 
 var db *sql.DB
+
+// Employee 구조체 정의
+type Employee struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	DepartmentID   int    `json:"department_id"`
+	Position       string `json:"position"`
+	HireDate       string `json:"hire_date"`
+	EmployeeNumber string `json:"employee_number"`
+	LargeText      string `json:"large_text"`
+}
+
+// Department 구조체 정의
+type Department struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	ParentID int    `json:"parent_id"`
+}
+
 
 func initDB() {
 	var err error
@@ -108,10 +129,76 @@ func main() {
 		api.GET("/departments", getDepartments)
 		api.GET("/departments/:id", getDepartment)
 		api.GET("/departments/:id/employees", getDepartmentEmployees)
+		api.POST("/departments", createDepartment)
 
 		// 직원 관련 API
 		api.GET("/employees", getEmployees)
 		api.GET("/employees/:id", getEmployee)
+
+		// 새로운 엔드포인트 추가
+		api.POST("/employees/by-departments", GetEmployeesByDepartmentIDs)
+
+		// 부서 트리 조회 API
+		api.GET("/departments/tree", func(c *gin.Context) {
+			parentId := c.Query("parentId")
+			if parentId == "" {
+				c.JSON(400, gin.H{"error": "Parent ID is required"})
+				return
+			}
+
+			query := `
+				WITH RECURSIVE department_tree AS (
+					-- 기본 케이스: 선택된 부모 부서
+					SELECT id, name, parent_id, 0 as level
+					FROM departments
+					WHERE id = ?
+					
+					UNION ALL
+					
+					-- 재귀 케이스: 하위 부서들
+					SELECT d.id, d.name, d.parent_id, dt.level + 1
+					FROM departments d
+					INNER JOIN department_tree dt ON d.parent_id = dt.id
+				)
+				SELECT * FROM department_tree
+				ORDER BY level, id;
+			`
+
+			rows, err := db.Query(query, parentId)
+			if err != nil {
+				log.Printf("Error querying department tree: %v", err)
+				c.JSON(500, gin.H{"error": "Failed to fetch department tree"})
+				return
+			}
+			defer rows.Close()
+
+			var departments []gin.H
+			for rows.Next() {
+				var id int
+				var name string
+				var parentID sql.NullInt64
+				var level int
+				if err := rows.Scan(&id, &name, &parentID, &level); err != nil {
+					log.Printf("Error scanning department row: %v", err)
+					c.JSON(500, gin.H{"error": "Failed to scan department row"})
+					return
+				}
+				departments = append(departments, gin.H{
+					"id":        id,
+					"name":      name,
+					"parent_id": parentID.Int64,
+					"level":     level,
+				})
+			}
+
+			if err = rows.Err(); err != nil {
+				log.Printf("Error iterating department rows: %v", err)
+				c.JSON(500, gin.H{"error": "Failed to iterate department rows"})
+				return
+			}
+
+			c.JSON(200, departments)
+		})
 	}
 
 	r.Run(":8080")
@@ -152,6 +239,7 @@ func getDepartments(c *gin.Context) {
 
 	c.JSON(200, departments)
 }
+
 
 // 특정 부서 조회
 func getDepartment(c *gin.Context) {
@@ -279,6 +367,115 @@ func getDepartmentEmployees(c *gin.Context) {
 
 	c.JSON(200, employees)
 }
+const max_id_length int = 9
+
+func createDepartment(c *gin.Context) {
+	var dept Department
+	if err := c.ShouldBindJSON(&dept); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 부모 ID가 배열인 경우를 처리
+	var parentIDs []interface{}
+	var newID int
+	if dept.ParentID != 0 {
+		// 부모 ID의 자리수에 따라 increment 결정
+		increment := 1
+		tempID := dept.ParentID
+		strID := strconv.Itoa(tempID)  // "123"
+		log.Printf("strID: %v", strID)
+		
+		if strID[len(strID)-1] != '0' {
+			c.JSON(400, gin.H{"error": "Failed to create department"})
+			return
+		}
+
+		for i := len(strID)- 1; i > 0 && strID[i-1] == '0'; i-- {
+			increment *= 10
+		}
+		
+		log.Printf("increment: %v", increment)
+
+		for i := 1; i < max_id_length; i++ {
+			// 부모 ID에 증가값을 곱해서 더함
+			// 예: 900 -> 910, 920, 930...
+			// 예: 1000 -> 1100, 1200, 1300...
+			calcId := dept.ParentID + (i * increment)
+			parentIDs = append(parentIDs, calcId)
+		}
+
+		// IN 절을 위한 플레이스홀더 생성
+		placeholders := make([]string, len(parentIDs))
+		for i := range parentIDs {
+			placeholders[i] = "?"
+		}
+
+		// 쿼리 실행
+		query := fmt.Sprintf("SELECT id FROM departments WHERE id IN (%s) ORDER BY id", strings.Join(placeholders, ","))
+		log.Printf("query: %v", query)
+		rows, err := db.Query(query, parentIDs...)
+		if err != nil {
+			log.Printf("Error querying departments: %v", err)
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to query departments: %v", err)})
+			return
+		}
+		defer rows.Close()
+		for i := 1; i < max_id_length; i++ {
+			var calcId int = dept.ParentID + (i * increment)
+			var id int	
+			if !rows.Next() {
+				// 더 이상 비교할 ID가 없으면 마지막 계산된 ID를 사용
+				newID = calcId
+				break
+			}
+			err := rows.Scan(&id)
+			if err != nil {
+				log.Printf("Error scanning count: %v", err)
+				c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to scan count: %v", err)})
+				return
+			}
+
+
+			//계산한 아이디와 조회한 아이디가 다르다는 것은 중간에 비어있는 아이디가 있다는 것이므로 그 아이디를 할당함
+			//예 : 계산한 아이디 1100, 조회한 아이디 1100 OK
+			//예 : 계산한 아이디 1300, 조회한 아이디 1400 중간에 1300이 비어있음 그래서 1300을 할당
+			log.Printf("calcId: %v, id: %v", calcId, id)
+			if calcId != id {
+				newID = calcId
+				break
+			}
+		}
+		log.Printf("newID: %v", newID)
+	}
+
+
+	log.Printf("dept.Name: %v", dept)
+	if newID == 0 {
+		c.JSON(400, gin.H{"error": "Failed to create department"})
+		return
+	}
+
+	result, err := db.Exec("INSERT INTO departments (id, name, parent_id) VALUES (?, ?, ?)", newID, dept.Name, dept.ParentID)
+	if err != nil {
+		log.Printf("Error creating department: %v", err)
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to create department: %v", err)})
+		return
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID: %v", err)
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to get last insert ID: %v", err)})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Department created successfully",
+		"id": id,
+	})
+}
+
 
 // 직원 목록 조회
 func getEmployees(c *gin.Context) {
@@ -341,4 +538,47 @@ func getEmployee(c *gin.Context) {
 		"large_text":    largeText.String,
 	}
 	c.JSON(200, employee)
+}
+
+// GetEmployeesByDepartmentIDs handles GET request for employees by department IDs
+func GetEmployeesByDepartmentIDs(c *gin.Context) {
+	var departmentIDs []int
+	if err := c.ShouldBindJSON(&departmentIDs); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// IN 절을 위한 플레이스홀더 생성
+	placeholders := make([]string, len(departmentIDs))
+	args := make([]interface{}, len(departmentIDs))
+	for i, id := range departmentIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`
+		SELECT e.id, e.name, e.department_id, e.position, e.hire_date, e.employee_number, e.large_text
+		FROM employees e
+		WHERE e.department_id IN (%s)
+		ORDER BY e.department_id, e.id
+	`, strings.Join(placeholders, ","))
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var employees []Employee
+	for rows.Next() {
+		var emp Employee
+		if err := rows.Scan(&emp.ID, &emp.Name, &emp.DepartmentID, &emp.Position, &emp.HireDate, &emp.EmployeeNumber, &emp.LargeText); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		employees = append(employees, emp)
+	}
+
+	c.JSON(http.StatusOK, employees)
 } 

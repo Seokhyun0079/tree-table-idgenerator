@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Department } from "../types";
 
 interface DepartmentManagerProps {
@@ -8,6 +8,10 @@ interface DepartmentManagerProps {
   onAdd?: (department: Omit<Department, "id">) => Promise<void>;
   onEdit?: (department: Department) => Promise<void>;
   onDelete?: (departmentId: number) => Promise<void>;
+}
+
+interface DepartmentWithLevel extends Department {
+  level: number;
 }
 
 export default function DepartmentManager({
@@ -22,12 +26,45 @@ export default function DepartmentManager({
     name: "",
     parent_id: null,
   });
+  const [departmentTree, setDepartmentTree] = useState<DepartmentWithLevel[]>(
+    []
+  );
+  const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<number>(0);
+
+  const fetchDepartmentTree = async (parentId: number) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/departments/tree?parentId=${parentId}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch department tree");
+      const data = await response.json();
+      setDepartmentTree(data);
+    } catch (error) {
+      console.error("Error fetching department tree:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedParentId) {
+      fetchDepartmentTree(selectedParentId);
+    }
+  }, [selectedParentId]);
+
+  const handleParentSelect = (parentId: number) => {
+    setSelectedLevel(parentId);
+    setSelectedParentId(parentId);
+    setNewDepartment((prev) => ({ ...prev, parent_id: parentId }));
+  };
 
   const handleAdd = async () => {
     if (!newDepartment.name.trim()) return;
     try {
       await onAdd?.(newDepartment);
       setNewDepartment({ name: "", parent_id: null });
+      setSelectedParentId(null);
+      setSelectedLevel(0);
+      setDepartmentTree([]);
       setIsAdding(false);
     } catch (error) {
       console.error("Failed to add department:", error);
@@ -76,26 +113,28 @@ export default function DepartmentManager({
               placeholder="부서 이름"
               className="w-full px-3 py-2 border rounded"
             />
-            <select
-              value={newDepartment.parent_id || ""}
-              onChange={(e) =>
-                setNewDepartment({
-                  ...newDepartment,
-                  parent_id: e.target.value ? parseInt(e.target.value) : null,
-                })
-              }
-              className="w-full px-3 py-2 border rounded"
-            >
-              <option value="">최상위 부서</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.name}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-2">
+              <select
+                value={selectedLevel || ""}
+                onChange={(e) => handleParentSelect(parseInt(e.target.value))}
+                className="w-full px-3 py-2 border rounded"
+              >
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex justify-end space-x-2">
               <button
-                onClick={() => setIsAdding(false)}
+                onClick={() => {
+                  setIsAdding(false);
+                  setSelectedParentId(null);
+                  setSelectedLevels([]);
+                  setNewDepartment({ name: "", parent_id: null });
+                }}
                 className="px-3 py-1 text-gray-600 hover:text-gray-800"
               >
                 취소
@@ -139,7 +178,6 @@ export default function DepartmentManager({
                   }
                   className="w-full px-3 py-2 border rounded"
                 >
-                  <option value="">최상위 부서</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}
