@@ -119,6 +119,9 @@ export default function DepartmentManager({
                 onChange={(e) => handleParentSelect(parseInt(e.target.value))}
                 className="w-full px-3 py-2 border rounded"
               >
+                <option key={0} value={undefined}>
+                  {"부모 부서 선택"}
+                </option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.id}>
                     {dept.name}

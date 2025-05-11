@@ -29,11 +29,16 @@ type Employee struct {
 
 // Department 구조체 정의
 type Department struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	ParentID int    `json:"parent_id"`
+	ID       int            `json:"id"`
+	Name     string         `json:"name"`
+	ParentID sql.NullInt64  `json:"parent_id"`
 }
 
+type DepartmentRequest struct {
+	ID       int     `json:"id"`
+	Name     string  `json:"name"`
+	ParentID *int    `json:"parent_id"`  // 포인터를 사용하여 null 가능성 처리
+}
 
 func initDB() {
 	var err error
@@ -368,22 +373,41 @@ func getDepartmentEmployees(c *gin.Context) {
 	c.JSON(200, employees)
 }
 const max_id_length int = 9
+const max_id_num int = 100000
 
 func createDepartment(c *gin.Context) {
-	var dept Department
-	if err := c.ShouldBindJSON(&dept); err != nil {
+	var req DepartmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	dept := Department{
+		ID:   req.ID,
+		Name: req.Name,
+	}
+
+	if req.ParentID != nil {
+		dept.ParentID = sql.NullInt64{
+			Int64: int64(*req.ParentID),
+			Valid: true,
+		}
+	} else {
+		dept.ParentID = sql.NullInt64{
+			Valid: false,
+		}
+	}
+
+	log.Printf("dept: %v", dept)
+
 	// 부모 ID가 배열인 경우를 처리
 	var parentIDs []interface{}
 	var newID int
-	if dept.ParentID != 0 {
+	if dept.ParentID.Valid && dept.ParentID.Int64 != 0 {
 		// 부모 ID의 자리수에 따라 increment 결정
-		increment := 1
-		tempID := dept.ParentID
-		strID := strconv.Itoa(tempID)  // "123"
+		increment := int64(1)
+		tempID := int(dept.ParentID.Int64)
+		strID := strconv.Itoa(tempID)  
 		log.Printf("strID: %v", strID)
 		
 		if strID[len(strID)-1] != '0' {
@@ -398,10 +422,7 @@ func createDepartment(c *gin.Context) {
 		log.Printf("increment: %v", increment)
 
 		for i := 1; i < max_id_length; i++ {
-			// 부모 ID에 증가값을 곱해서 더함
-			// 예: 900 -> 910, 920, 930...
-			// 예: 1000 -> 1100, 1200, 1300...
-			calcId := dept.ParentID + (i * increment)
+			calcId := dept.ParentID.Int64 + (int64(i) * increment)
 			parentIDs = append(parentIDs, calcId)
 		}
 
@@ -413,7 +434,6 @@ func createDepartment(c *gin.Context) {
 
 		// 쿼리 실행
 		query := fmt.Sprintf("SELECT id FROM departments WHERE id IN (%s) ORDER BY id", strings.Join(placeholders, ","))
-		log.Printf("query: %v", query)
 		rows, err := db.Query(query, parentIDs...)
 		if err != nil {
 			log.Printf("Error querying departments: %v", err)
@@ -421,8 +441,9 @@ func createDepartment(c *gin.Context) {
 			return
 		}
 		defer rows.Close()
+
 		for i := 1; i < max_id_length; i++ {
-			var calcId int = dept.ParentID + (i * increment)
+			var calcId int = int(dept.ParentID.Int64 + (int64(i) * increment))
 			var id int	
 			if !rows.Next() {
 				// 더 이상 비교할 ID가 없으면 마지막 계산된 ID를 사용
@@ -446,13 +467,43 @@ func createDepartment(c *gin.Context) {
 				break
 			}
 		}
-		log.Printf("newID: %v", newID)
+	}else{
+		//부모 ID가 0인 경우 최대 ID를 조회
+		query := fmt.Sprintf("SELECT max(id) FROM departments")
+		rows, err := db.Query(query)
+		if err != nil {
+			log.Printf("Error querying departments: %v", err)
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to query departments: %v", err)})
+			return
+		}
+		defer rows.Close()
+		var maxID int
+		if rows.Next() {
+			err := rows.Scan(&maxID)
+			if err != nil {
+				log.Printf("Error scanning max ID: %v", err)
+				c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to scan max ID: %v", err)})
+				return
+			}
+		}
+		log.Printf("maxID: %v", maxID)
+		// if maxID = 2345 -> "2345"
+		stringID := strconv.Itoa(maxID)
+		// if maxID = 2345 -> "1000" -> 1000
+		increment, err := strconv.Atoi("1" + strings.Repeat("0", len(stringID)-1))
+		// if maxID = 2345 -> "2000" -> 2000
+		highestDigit, err := strconv.Atoi(string(stringID[0]) + strings.Repeat("0", len(stringID)-1))
+		// if maxID = 2345 -> 2000(highestDigit) + 1000(increment) = 3000
+		newID = increment + highestDigit
+		if err != nil {
+			log.Printf("Error converting max ID: %v", err)
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to convert max ID: %v", err)})
+			return
+		}
 	}
-
-
-	log.Printf("dept.Name: %v", dept)
-	if newID == 0 {
-		c.JSON(400, gin.H{"error": "Failed to create department"})
+	log.Printf("newID: %v", newID)
+	if newID >= max_id_num || newID == 0 {
+		c.JSON(400, gin.H{"error": "can't create department"})
 		return
 	}
 
