@@ -16,7 +16,7 @@ import (
 
 var db *sql.DB
 
-// Employee 구조체 정의
+// Employee struct definition
 type Employee struct {
 	ID             int    `json:"id"`
 	Name           string `json:"name"`
@@ -27,7 +27,7 @@ type Employee struct {
 	LargeText      string `json:"large_text"`
 }
 
-// Department 구조체 정의
+// Department struct definition
 type Department struct {
 	ID       int            `json:"id"`
 	Name     string         `json:"name"`
@@ -37,19 +37,19 @@ type Department struct {
 type DepartmentRequest struct {
 	ID       int     `json:"id"`
 	Name     string  `json:"name"`
-	ParentID *int    `json:"parent_id"`  // 포인터를 사용하여 null 가능성 처리
+	ParentID *int    `json:"parent_id"`  // Using pointer to handle null possibility
 }
 
 func initDB() {
 	var err error
-	// 환경 변수에서 데이터베이스 연결 정보 가져오기
+	// Get database connection information from environment variables
 	dbHost := getEnv("DB_HOST", "localhost")
 	dbPort := getEnv("DB_PORT", "3306")
 	dbUser := getEnv("DB_USER", "root")
 	dbPassword := getEnv("DB_PASSWORD", "rootpassword")
 	dbName := getEnv("DB_NAME", "mydatabase")
 	
-	// 문자열을 숫자로 변환
+	// Convert string to number
 	retryIntervalStr := getEnv("DB_RETRY_INTERVAL", "10")
 	maxRetriesStr := getEnv("DB_MAX_RETRIES", "30")
 	
@@ -65,10 +65,10 @@ func initDB() {
 		maxRetries = 30
 	}
 
-	// 데이터베이스 연결 문자열 생성
+	// Create database connection string
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPassword, dbHost, dbPort, dbName)
 	
-	// 재시도 로직
+	// Retry logic
 	for i := 0; i < maxRetries; i++ {
 		db, err = sql.Open("mysql", dsn)
 		if err != nil {
@@ -91,7 +91,7 @@ func initDB() {
 	log.Fatal("Failed to connect to database after maximum retries")
 }
 
-// 환경 변수 가져오기 (기본값 설정)
+// Get environment variable (with default value)
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -106,7 +106,7 @@ func main() {
 
 	r := gin.Default()
 
-	// CORS 미들웨어 추가
+	// Add CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -118,7 +118,7 @@ func main() {
 		c.Next()
 	})
 
-	// Health check 엔드포인트 추가
+	// Add health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		if err := db.Ping(); err != nil {
 			c.JSON(500, gin.H{"status": "error", "message": "Database connection failed"})
@@ -127,89 +127,158 @@ func main() {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	// API 라우트 설정
+	// Set up API routes
 	api := r.Group("/api")
 	{
-		// 부서 관련 API
+		// Department related APIs
 		api.GET("/departments", getDepartments)
 		api.GET("/departments/:id", getDepartment)
 		api.GET("/departments/:id/employees", getDepartmentEmployees)
 		api.POST("/departments", createDepartment)
 
-		// 직원 관련 API
+		// Employee related APIs
 		api.GET("/employees", getEmployees)
 		api.GET("/employees/:id", getEmployee)
 
-		// 새로운 엔드포인트 추가
+		// Add new endpoint
 		api.POST("/employees/by-departments", GetEmployeesByDepartmentIDs)
 
-		// 부서 트리 조회 API
-		api.GET("/departments/tree", func(c *gin.Context) {
-			parentId := c.Query("parentId")
-			if parentId == "" {
-				c.JSON(400, gin.H{"error": "Parent ID is required"})
-				return
-			}
-
-			query := `
-				WITH RECURSIVE department_tree AS (
-					-- 기본 케이스: 선택된 부모 부서
-					SELECT id, name, parent_id, 0 as level
-					FROM departments
-					WHERE id = ?
-					
-					UNION ALL
-					
-					-- 재귀 케이스: 하위 부서들
-					SELECT d.id, d.name, d.parent_id, dt.level + 1
-					FROM departments d
-					INNER JOIN department_tree dt ON d.parent_id = dt.id
-				)
-				SELECT * FROM department_tree
-				ORDER BY level, id;
-			`
-
-			rows, err := db.Query(query, parentId)
-			if err != nil {
-				log.Printf("Error querying department tree: %v", err)
-				c.JSON(500, gin.H{"error": "Failed to fetch department tree"})
-				return
-			}
-			defer rows.Close()
-
-			var departments []gin.H
-			for rows.Next() {
-				var id int
-				var name string
-				var parentID sql.NullInt64
-				var level int
-				if err := rows.Scan(&id, &name, &parentID, &level); err != nil {
-					log.Printf("Error scanning department row: %v", err)
-					c.JSON(500, gin.H{"error": "Failed to scan department row"})
-					return
-				}
-				departments = append(departments, gin.H{
-					"id":        id,
-					"name":      name,
-					"parent_id": parentID.Int64,
-					"level":     level,
-				})
-			}
-
-			if err = rows.Err(); err != nil {
-				log.Printf("Error iterating department rows: %v", err)
-				c.JSON(500, gin.H{"error": "Failed to iterate department rows"})
-				return
-			}
-
-			c.JSON(200, departments)
-		})
+		// Department tree query API
+		api.GET("/departments/tree-recursive", getDepartmentTree)
+		api.GET("/departments/tree-comparison", getDepartmentTreeByComparison)
 	}
 
 	r.Run(":8080")
 }
 
-// 부서 목록 조회
+func getDepartmentTreeByComparison(c *gin.Context) {
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(400, gin.H{"error": "ID is required"})
+		return
+	}
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid ID "+ id + " " + err.Error()})
+		return
+	}
+	if idInt < 10 {
+		c.JSON(400, gin.H{"error": "ID must be greater than 10"})
+		return
+	}
+
+	increment := 10
+	for i := len(id)- 1; i > 0 && id[i-1] == '0'; i-- {
+		increment *= 10
+	}
+	
+
+	query :=`
+	SELECT id, name, parent_id,
+	REPEAT(CONCAT(id, name, parent_id), 200000) as virtual_column
+	FROM departments
+	WHERE id <= ? and id > ?
+	`
+	log.Printf("Executing query: %s with parameters: id=%s, idInt-increment=%d", query, id, idInt-increment)
+	rows, err := db.Query(query, id, idInt-increment)
+	if err != nil {
+		log.Printf("Error querying department tree: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to fetch department tree"})
+		return
+	}
+	defer rows.Close()
+
+	var departments []gin.H
+	for rows.Next() {
+		var id int
+		var name string
+		var parentID sql.NullInt64
+		var virtualColumn sql.NullString
+		if err := rows.Scan(&id, &name, &parentID, &virtualColumn); err != nil {
+			log.Printf("Error scanning department row: %v", err)
+			c.JSON(500, gin.H{"error": "Failed to scan department row"})
+			return
+		}
+		departments = append(departments, gin.H{
+			"id":        id,
+			"name":      name,
+			"parent_id": parentID.Int64,
+			"virtual_column": virtualColumn.String,
+		})
+	}
+
+	c.JSON(200, departments)
+}
+
+func getDepartmentTree(c *gin.Context) {
+	parentId := c.Query("parentId")
+	if parentId == "" {
+		c.JSON(400, gin.H{"error": "Parent ID is required"})
+		return
+	}
+
+	query := `
+		WITH RECURSIVE department_tree AS (
+			-- Base case: selected parent department
+			SELECT id, name, parent_id, 0 as level, CAST(id AS CHAR(100)) as path,
+			REPEAT(CONCAT(id, name, parent_id), 200000) as virtual_column
+			FROM departments
+			WHERE id = ?
+			
+			UNION ALL
+			
+			-- Recursive case: child departments
+			SELECT d.id, d.name, d.parent_id, dt.level + 1, CONCAT(dt.path, ',', d.id),
+			REPEAT(CONCAT(d.id, d.name, d.parent_id), 200000) as virtual_column
+			FROM departments d
+			INNER JOIN department_tree dt ON d.parent_id = dt.id
+		)
+		SELECT DISTINCT d1.id, d1.name, d1.parent_id, d1.level, d1.virtual_column
+		FROM department_tree d1
+		LEFT JOIN department_tree d2 ON d1.id = d2.id AND d1.path > d2.path
+		WHERE d2.id IS NULL
+		ORDER BY d1.level, d1.parent_id, d1.id;
+	`
+
+	rows, err := db.Query(query, parentId)
+	if err != nil {
+		log.Printf("Error querying department tree: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to fetch department tree"})
+		return
+	}
+	defer rows.Close()
+
+	var departments []gin.H
+	for rows.Next() {
+		var id int
+		var name string
+		var parentID sql.NullInt64
+		var level int
+		var virtualColumn sql.NullString
+		if err := rows.Scan(&id, &name, &parentID, &level, &virtualColumn); err != nil {
+			log.Printf("Error scanning department row: %v", err)
+			c.JSON(500, gin.H{"error": "Failed to scan department row"})
+			return
+		}
+		departments = append(departments, gin.H{
+			"id":        id,
+			"name":      name,
+			"parent_id": parentID.Int64,
+			"level":     level,
+			"virtual_column": virtualColumn.String,
+		})
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating department rows: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to iterate department rows"})
+		return
+	}
+
+	c.JSON(200, departments)
+}
+
+// Get department list
 func getDepartments(c *gin.Context) {
 	rows, err := db.Query("SELECT id, parent_id, name FROM departments")
 	if err != nil {
@@ -245,8 +314,7 @@ func getDepartments(c *gin.Context) {
 	c.JSON(200, departments)
 }
 
-
-// 특정 부서 조회
+// Get specific department
 func getDepartment(c *gin.Context) {
 	id := c.Param("id")
 	var deptID int
@@ -271,22 +339,22 @@ func getDepartment(c *gin.Context) {
 	c.JSON(200, department)
 }
 
-// 특정 부서의 직원 목록 조회
+// Get employee list for specific department
 func getDepartmentEmployees(c *gin.Context) {
 	deptID := c.Param("id")
 	
-	// 실행 계획 확인을 위한 쿼리
+	// Query for execution plan check
 	explainQuery := `
 		EXPLAIN FORMAT=JSON
 		WITH RECURSIVE subdepartments AS (
-			-- 기본 부서
+			-- Base department
 			SELECT id, parent_id
 			FROM departments
 			WHERE id = ?
 			
 			UNION ALL
 			
-			-- 하위 부서들
+			-- Child departments
 			SELECT d.id, d.parent_id
 			FROM departments d
 			INNER JOIN subdepartments sd ON d.parent_id = sd.id
@@ -297,7 +365,7 @@ func getDepartmentEmployees(c *gin.Context) {
 		ORDER BY e.department_id, e.name
 	`
 	
-	// 실행 계획 출력
+	// Print execution plan
 	rows, err := db.Query(explainQuery, deptID)
 	if err != nil {
 		log.Printf("Error explaining query: %v", err)
@@ -307,23 +375,21 @@ func getDepartmentEmployees(c *gin.Context) {
 		for rows.Next() {
 			if err := rows.Scan(&explainResult); err != nil {
 				log.Printf("Error scanning explain result: %v", err)
-			} else {
-				log.Printf("Query execution plan for department %s: %s", deptID, explainResult)
-			}
+			} 
 		}
 	}
 	
-	// 실제 쿼리 실행
+	// Execute actual query
 	query := `
 		WITH RECURSIVE subdepartments AS (
-			-- 기본 부서
+			-- Base department
 			SELECT id, parent_id
 			FROM departments
 			WHERE id = ?
 			
 			UNION ALL
 			
-			-- 하위 부서들
+			-- Child departments
 			SELECT d.id, d.parent_id
 			FROM departments d
 			INNER JOIN subdepartments sd ON d.parent_id = sd.id
@@ -372,6 +438,7 @@ func getDepartmentEmployees(c *gin.Context) {
 
 	c.JSON(200, employees)
 }
+
 const max_id_length int = 9
 const max_id_num int = 100000
 
@@ -400,11 +467,11 @@ func createDepartment(c *gin.Context) {
 
 	log.Printf("dept: %v", dept)
 
-	// 부모 ID가 배열인 경우를 처리
+	// Handle parent ID array
 	var parentIDs []interface{}
 	var newID int
 	if dept.ParentID.Valid && dept.ParentID.Int64 != 0 {
-		// 부모 ID의 자리수에 따라 increment 결정
+		// Determine increment based on parent ID digits
 		increment := int64(1)
 		tempID := int(dept.ParentID.Int64)
 		strID := strconv.Itoa(tempID)  
@@ -426,13 +493,13 @@ func createDepartment(c *gin.Context) {
 			parentIDs = append(parentIDs, calcId)
 		}
 
-		// IN 절을 위한 플레이스홀더 생성
+		// Create placeholders for IN clause
 		placeholders := make([]string, len(parentIDs))
 		for i := range parentIDs {
 			placeholders[i] = "?"
 		}
 
-		// 쿼리 실행
+		// Execute query
 		query := fmt.Sprintf("SELECT id FROM departments WHERE id IN (%s) ORDER BY id", strings.Join(placeholders, ","))
 		rows, err := db.Query(query, parentIDs...)
 		if err != nil {
@@ -446,7 +513,7 @@ func createDepartment(c *gin.Context) {
 			var calcId int = int(dept.ParentID.Int64 + (int64(i) * increment))
 			var id int	
 			if !rows.Next() {
-				// 더 이상 비교할 ID가 없으면 마지막 계산된 ID를 사용
+				// If no more IDs to compare, use the last calculated ID
 				newID = calcId
 				break
 			}
@@ -457,10 +524,9 @@ func createDepartment(c *gin.Context) {
 				return
 			}
 
-
-			//계산한 아이디와 조회한 아이디가 다르다는 것은 중간에 비어있는 아이디가 있다는 것이므로 그 아이디를 할당함
-			//예 : 계산한 아이디 1100, 조회한 아이디 1100 OK
-			//예 : 계산한 아이디 1300, 조회한 아이디 1400 중간에 1300이 비어있음 그래서 1300을 할당
+			// If calculated ID and queried ID are different, it means there's a gap in IDs
+			// Example: calculated ID 1100, queried ID 1100 OK
+			// Example: calculated ID 1300, queried ID 1400 means 1300 is available
 			log.Printf("calcId: %v, id: %v", calcId, id)
 			if calcId != id {
 				newID = calcId
@@ -468,7 +534,7 @@ func createDepartment(c *gin.Context) {
 			}
 		}
 	}else{
-		//부모 ID가 0인 경우 최대 ID를 조회
+		// If parent ID is 0, query maximum ID
 		query := fmt.Sprintf("SELECT max(id) FROM departments")
 		rows, err := db.Query(query)
 		if err != nil {
@@ -527,8 +593,7 @@ func createDepartment(c *gin.Context) {
 	})
 }
 
-
-// 직원 목록 조회
+// Get employee list
 func getEmployees(c *gin.Context) {
 	rows, err := db.Query("SELECT id, name, department_id, large_text FROM employees")
 	if err != nil {
@@ -565,7 +630,7 @@ func getEmployees(c *gin.Context) {
 	c.JSON(200, employees)
 }
 
-// 특정 직원 조회
+// Get specific employee
 func getEmployee(c *gin.Context) {
 	id := c.Param("id")
 	var empID, deptID int
@@ -599,7 +664,7 @@ func GetEmployeesByDepartmentIDs(c *gin.Context) {
 		return
 	}
 
-	// IN 절을 위한 플레이스홀더 생성
+	// Create placeholders for IN clause
 	placeholders := make([]string, len(departmentIDs))
 	args := make([]interface{}, len(departmentIDs))
 	for i, id := range departmentIDs {

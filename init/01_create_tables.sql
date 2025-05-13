@@ -85,84 +85,226 @@ INSERT INTO departments (id, name, parent_id) VALUES
 -- Create second-level departments (2-3 for each first-level department)
 INSERT INTO departments (id, name, parent_id) VALUES
 -- Management Support Division second-level
-(910, 'General Affairs 1 Team', 900),
-(920, 'Office Management Team', 900),
-(810, 'Contract Management Team', 800),
-(820, 'Legal Support Team', 800),
-(710, 'Management Planning Team', 700),
-(720, 'Performance Management Team', 700),
+(890, 'General Affairs 1 Team', 900),
+(880, 'Office Management Team', 900),
+(790, 'Contract Management Team', 800),
+(780, 'Legal Support Team', 800),
+(690, 'Management Planning Team', 700),
+(680, 'Performance Management Team', 700),
 
 -- Sales Division second-level
-(1910, 'Domestic Sales 1 Team', 1900),
-(1920, 'Domestic Sales 2 Team', 1900),
-(1810, 'Asia Sales Team', 1800),
-(1820, 'Europe Sales Team', 1800),
-(1710, 'Sales Support 1 Team', 1700),
-(1720, 'Sales Support 2 Team', 1700),
+(1890, 'Domestic Sales 1 Team', 1900),
+(1880, 'Domestic Sales 2 Team', 1900),
+(1790, 'Asia Sales Team', 1800),
+(1780, 'Europe Sales Team', 1800),
+(1690, 'Sales Support 1 Team', 1700),
+(1680, 'Sales Support 2 Team', 1700),
 
 -- Production Division second-level
-(2910, 'Production Planning Team', 2900),
-(2920, 'Production Control Team', 2900),
-(2810, 'Facility Maintenance Team', 2800),
-(2820, 'Facility Improvement Team', 2800),
-(2710, 'Material Procurement Team', 2700),
-(2720, 'Material Control Team', 2700),
+(2890, 'Production Planning Team', 2900),
+(2880, 'Production Control Team', 2900),
+(2790, 'Facility Maintenance Team', 2800),
+(2780, 'Facility Improvement Team', 2800),
+(2690, 'Material Procurement Team', 2700),
+(2680, 'Material Control Team', 2700),
 
 -- R&D Division second-level
-(3910, 'Product Development 1 Team', 3900),
-(3920, 'Product Development 2 Team', 3900),
-(3810, 'Technical Research 1 Team', 3800),
-(3820, 'Technical Research 2 Team', 3800),
-(3710, 'Quality Improvement 1 Team', 3700),
-(3720, 'Quality Improvement 2 Team', 3700),
+(3890, 'Product Development 1 Team', 3900),
+(3880, 'Product Development 2 Team', 3900),
+(3790, 'Technical Research 1 Team', 3800),
+(3780, 'Technical Research 2 Team', 3800),
+(3690, 'Quality Improvement 1 Team', 3700),
+(3680, 'Quality Improvement 2 Team', 3700),
 
 -- IT Division second-level
-(4910, 'Web Development Team', 4900),
-(4920, 'Mobile Development Team', 4900),
-(4810, 'Server Management Team', 4800),
-(4820, 'Network Team', 4800),
-(4710, 'Security Management Team', 4700),
-(4720, 'Security Audit Team', 4700),
+(4890, 'Web Development Team', 4900),
+(4880, 'Mobile Development Team', 4900),
+(4790, 'Server Management Team', 4800),
+(4780, 'Network Team', 4800),
+(4690, 'Security Management Team', 4700),
+(4680, 'Security Audit Team', 4700),
 
 -- HR & General Affairs Division second-level
-(5910, 'HR Management Team', 5900),
-(5920, 'Recruitment Team', 5900),
-(5810, 'Training Planning Team', 5800),
-(5820, 'Training Operations Team', 5800),
-(5710, 'Benefits 1 Team', 5700),
-(5720, 'Benefits 2 Team', 5700),
+(5890, 'HR Management Team', 5900),
+(5880, 'Recruitment Team', 5900),
+(5790, 'Training Planning Team', 5800),
+(5780, 'Training Operations Team', 5800),
+(5690, 'Benefits 1 Team', 5700),
+(5680, 'Benefits 2 Team', 5700),
 
 -- Finance & Accounting Division second-level
-(6910, 'Financial Planning Team', 6900),
-(6920, 'Treasury Team', 6800),
-(6810, 'Accounting Management Team', 6800),
-(6820, 'Financial Accounting Team', 6800),
-(6710, 'Tax Management Team', 6700),
-(6720, 'Tax Planning Team', 6700),
+(6890, 'Financial Planning Team', 6900),
+(6880, 'Treasury Team', 6900),
+(6790, 'Accounting Management Team', 6800),
+(6780, 'Financial Accounting Team', 6800),
+(6690, 'Tax Management Team', 6700),
+(6680, 'Tax Planning Team', 6700),
 
 -- Quality Control Division second-level
-(7910, 'Quality Assurance 1 Team', 7900),
-(7920, 'Quality Assurance 2 Team', 7900),
-(7810, 'Inspection Management Team', 7800),
-(7820, 'Inspection Operations Team', 7800),
-(7710, 'Environment Management Team', 7700),
-(7720, 'Safety Management Team', 7700),
+(7890, 'Quality Assurance 1 Team', 7900),
+(7880, 'Quality Assurance 2 Team', 7900),
+(7790, 'Inspection Management Team', 7800),
+(7780, 'Inspection Operations Team', 7800),
+(7690, 'Environment Management Team', 7700),
+(7680, 'Safety Management Team', 7700),
 
 -- International Business Division second-level
-(8910, 'East Asia Team', 8900),
-(8920, 'Southeast Asia Team', 8900),
-(8810, 'Western Europe Team', 8800),
-(8820, 'Eastern Europe Team', 8800),
-(8710, 'North America Team', 8700),
-(8720, 'South America Team', 8700),
+(8890, 'East Asia Team', 8900),
+(8880, 'Southeast Asia Team', 8900),
+(8790, 'Western Europe Team', 8800),
+(8780, 'Eastern Europe Team', 8800),
+(8690, 'North America Team', 8700),
+(8680, 'South America Team', 8700),
 
 -- Strategic Planning Division second-level
-(9910, 'Strategic Planning 1 Team', 9900),
-(9920, 'Strategic Planning 2 Team', 9900),
-(9810, 'Business Development 1 Team', 9800),
-(9820, 'Business Development 2 Team', 9800),
-(9710, 'Investment Management 1 Team', 9700),
-(9720, 'Investment Management 2 Team', 9700);
+(9890, 'Strategic Planning 1 Team', 9900),
+(9880, 'Strategic Planning 2 Team', 9900),
+(9790, 'Business Development 1 Team', 9800),
+(9780, 'Business Development 2 Team', 9800),
+(9690, 'Investment Management 1 Team', 9700),
+(9680, 'Investment Management 2 Team', 9700);
+
+-- Create third-level departments (2-3 for each second-level department)
+INSERT INTO departments (id, name, parent_id) VALUES
+-- Management Support Division third-level
+(889, 'General Affairs 1-1 Team', 890),
+(888, 'General Affairs 1-2 Team', 890),
+(879, 'Office Management 1 Team', 880),
+(878, 'Office Management 2 Team', 880),
+(789, 'Contract Management 1 Team', 790),
+(788, 'Contract Management 2 Team', 790),
+(779, 'Legal Support 1 Team', 780),
+(778, 'Legal Support 2 Team', 780),
+(689, 'Management Planning 1 Team', 690),
+(688, 'Management Planning 2 Team', 690),
+(679, 'Performance Management 1 Team', 680),
+(678, 'Performance Management 2 Team', 680),
+
+-- Sales Division third-level
+(1889, 'Domestic Sales 1-1 Team', 1890),
+(1888, 'Domestic Sales 1-2 Team', 1890),
+(1879, 'Domestic Sales 2-1 Team', 1880),
+(1878, 'Domestic Sales 2-2 Team', 1880),
+(1789, 'Asia Sales 1 Team', 1790),
+(1788, 'Asia Sales 2 Team', 1790),
+(1779, 'Europe Sales 1 Team', 1780),
+(1778, 'Europe Sales 2 Team', 1780),
+(1689, 'Sales Support 1-1 Team', 1690),
+(1688, 'Sales Support 1-2 Team', 1690),
+(1679, 'Sales Support 2-1 Team', 1680),
+(1678, 'Sales Support 2-2 Team', 1680),
+
+-- Production Division third-level
+(2889, 'Production Planning 1 Team', 2890),
+(2888, 'Production Planning 2 Team', 2890),
+(2879, 'Production Control 1 Team', 2880),
+(2878, 'Production Control 2 Team', 2880),
+(2789, 'Facility Maintenance 1 Team', 2790),
+(2788, 'Facility Maintenance 2 Team', 2790),
+(2779, 'Facility Improvement 1 Team', 2780),
+(2778, 'Facility Improvement 2 Team', 2780),
+(2689, 'Material Procurement 1 Team', 2690),
+(2688, 'Material Procurement 2 Team', 2690),
+(2679, 'Material Control 1 Team', 2680),
+(2678, 'Material Control 2 Team', 2680),
+
+-- R&D Division third-level
+(3889, 'Product Development 1-1 Team', 3890),
+(3888, 'Product Development 1-2 Team', 3890),
+(3879, 'Product Development 2-1 Team', 3880),
+(3878, 'Product Development 2-2 Team', 3880),
+(3789, 'Technical Research 1-1 Team', 3790),
+(3788, 'Technical Research 1-2 Team', 3790),
+(3779, 'Technical Research 2-1 Team', 3780),
+(3778, 'Technical Research 2-2 Team', 3780),
+(3689, 'Quality Improvement 1-1 Team', 3690),
+(3688, 'Quality Improvement 1-2 Team', 3690),
+(3679, 'Quality Improvement 2-1 Team', 3680),
+(3678, 'Quality Improvement 2-2 Team', 3680),
+
+-- IT Division third-level
+(4889, 'Web Development 1 Team', 4890),
+(4888, 'Web Development 2 Team', 4890),
+(4879, 'Mobile Development 1 Team', 4880),
+(4878, 'Mobile Development 2 Team', 4880),
+(4789, 'Server Management 1 Team', 4790),
+(4788, 'Server Management 2 Team', 4790),
+(4779, 'Network 1 Team', 4780),
+(4778, 'Network 2 Team', 4780),
+(4689, 'Security Management 1 Team', 4690),
+(4688, 'Security Management 2 Team', 4690),
+(4679, 'Security Audit 1 Team', 4680),
+(4678, 'Security Audit 2 Team', 4680),
+
+-- HR & General Affairs Division third-level
+(5889, 'HR Management 1 Team', 5890),
+(5888, 'HR Management 2 Team', 5890),
+(5879, 'Recruitment 1 Team', 5880),
+(5878, 'Recruitment 2 Team', 5880),
+(5789, 'Training Planning 1 Team', 5790),
+(5788, 'Training Planning 2 Team', 5790),
+(5779, 'Training Operations 1 Team', 5780),
+(5778, 'Training Operations 2 Team', 5780),
+(5689, 'Benefits 1-1 Team', 5690),
+(5688, 'Benefits 1-2 Team', 5690),
+(5679, 'Benefits 2-1 Team', 5680),
+(5678, 'Benefits 2-2 Team', 5680),
+
+-- Finance & Accounting Division third-level
+(6889, 'Financial Planning 1 Team', 6890),
+(6888, 'Financial Planning 2 Team', 6890),
+(6879, 'Treasury 1 Team', 6880),
+(6878, 'Treasury 2 Team', 6880),
+(6789, 'Accounting Management 1 Team', 6790),
+(6788, 'Accounting Management 2 Team', 6790),
+(6779, 'Financial Accounting 1 Team', 6780),
+(6778, 'Financial Accounting 2 Team', 6780),
+(6689, 'Tax Management 1 Team', 6690),
+(6688, 'Tax Management 2 Team', 6690),
+(6679, 'Tax Planning 1 Team', 6680),
+(6678, 'Tax Planning 2 Team', 6680),
+
+-- Quality Control Division third-level
+(7889, 'Quality Assurance 1-1 Team', 7890),
+(7888, 'Quality Assurance 1-2 Team', 7890),
+(7879, 'Quality Assurance 2-1 Team', 7880),
+(7878, 'Quality Assurance 2-2 Team', 7880),
+(7789, 'Inspection Management 1 Team', 7790),
+(7788, 'Inspection Management 2 Team', 7790),
+(7779, 'Inspection Operations 1 Team', 7780),
+(7778, 'Inspection Operations 2 Team', 7780),
+(7689, 'Environment Management 1 Team', 7690),
+(7688, 'Environment Management 2 Team', 7690),
+(7679, 'Safety Management 1 Team', 7680),
+(7678, 'Safety Management 2 Team', 7680),
+
+-- International Business Division third-level
+(8889, 'East Asia 1 Team', 8890),
+(8888, 'East Asia 2 Team', 8890),
+(8879, 'Southeast Asia 1 Team', 8880),
+(8878, 'Southeast Asia 2 Team', 8880),
+(8789, 'Western Europe 1 Team', 8790),
+(8788, 'Western Europe 2 Team', 8790),
+(8779, 'Eastern Europe 1 Team', 8780),
+(8778, 'Eastern Europe 2 Team', 8780),
+(8689, 'North America 1 Team', 8690),
+(8688, 'North America 2 Team', 8690),
+(8679, 'South America 1 Team', 8680),
+(8678, 'South America 2 Team', 8680),
+
+-- Strategic Planning Division third-level
+(9889, 'Strategic Planning 1-1 Team', 9890),
+(9888, 'Strategic Planning 1-2 Team', 9890),
+(9879, 'Strategic Planning 2-1 Team', 9880),
+(9878, 'Strategic Planning 2-2 Team', 9880),
+(9789, 'Business Development 1-1 Team', 9790),
+(9788, 'Business Development 1-2 Team', 9790),
+(9779, 'Business Development 2-1 Team', 9780),
+(9778, 'Business Development 2-2 Team', 9780),
+(9689, 'Investment Management 1-1 Team', 9690),
+(9688, 'Investment Management 1-2 Team', 9690),
+(9679, 'Investment Management 2-1 Team', 9680),
+(9678, 'Investment Management 2-2 Team', 9680);
 
 -- Add more employees to reach 100000 (using a stored procedure)
 DELIMITER //
@@ -174,7 +316,7 @@ BEGIN
     DECLARE dept_prefix VARCHAR(10);
     DECLARE i INT;
     
-    -- 부서별 접두사 설정
+    -- Set prefix for each department
     DECLARE dept_prefixes CURSOR FOR 
         SELECT id, name,
             CASE 
@@ -202,7 +344,7 @@ BEGIN
             LEAVE read_loop;
         END IF;
         
-        -- 각 부서에 100명의 직원 추가
+        -- Add 100 employees to each department
         SET i = 1;
         WHILE i <= 100 DO
             INSERT INTO employees (
@@ -213,28 +355,28 @@ BEGIN
                 employee_number,
                 large_text
             ) VALUES (
-                CONCAT(dept_name, ' 직원 ', i),
+                CONCAT(dept_name, ' Employee ', i),
                 dept_id,
                 CASE 
-                    WHEN i <= 5 THEN '부장'
-                    WHEN i <= 15 THEN '차장'
-                    WHEN i <= 30 THEN '과장'
-                    WHEN i <= 50 THEN '대리'
-                    ELSE '사원'
+                    WHEN i <= 5 THEN 'Manager'
+                    WHEN i <= 15 THEN 'Deputy Manager'
+                    WHEN i <= 30 THEN 'Team Leader'
+                    WHEN i <= 50 THEN 'Senior Staff'
+                    ELSE 'Staff'
                 END,
                 DATE_ADD('2020-01-01', INTERVAL FLOOR(RAND() * 1000) DAY),
                 CONCAT(dept_prefix, LPAD(SUBSTRING(dept_id, -2), 2, '0'), LPAD(i, 3, '0')),
-                REPEAT(CONCAT('직원번호: ', CONCAT(dept_prefix, LPAD(SUBSTRING(dept_id, -2), 2, '0'), LPAD(i, 3, '0')), 
-                       ', 부서: ', dept_name, 
-                       ', 직위: ', 
+                REPEAT(CONCAT('Employee Number: ', CONCAT(dept_prefix, LPAD(SUBSTRING(dept_id, -2), 2, '0'), LPAD(i, 3, '0')), 
+                       ', Department: ', dept_name, 
+                       ', Position: ', 
                        CASE 
-                           WHEN i <= 5 THEN '부장'
-                           WHEN i <= 15 THEN '차장'
-                           WHEN i <= 30 THEN '과장'
-                           WHEN i <= 50 THEN '대리'
-                           ELSE '사원'
+                           WHEN i <= 5 THEN 'Manager'
+                           WHEN i <= 15 THEN 'Deputy Manager'
+                           WHEN i <= 30 THEN 'Team Leader'
+                           WHEN i <= 50 THEN 'Senior Staff'
+                           ELSE 'Staff'
                        END, 
-                       ', 입사일: ', 
+                       ', Hire Date: ', 
                        DATE_FORMAT(DATE_ADD('2020-01-01', INTERVAL FLOOR(RAND() * 1000) DAY), '%Y-%m-%d')), 1000)
             );
             SET i = i + 1;
@@ -245,7 +387,7 @@ BEGIN
 END //
 DELIMITER ;
 
--- 저장 프로시저 실행
+-- Execute stored procedure
 CALL AddMoreEmployees();
 DROP PROCEDURE IF EXISTS AddMoreEmployees;
 

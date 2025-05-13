@@ -49,7 +49,7 @@ export default function DepartmentTree({
             >
               <div className="font-medium">{dept.name}</div>
               <div className="text-sm text-gray-500">
-                ID: {dept.id} | 상위부서 ID: {dept.parent_id}
+                ID: {dept.id} | Parent ID: {dept.parent_id}
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-// 특정 부서의 모든 하위 부서를 재귀적으로 가져오는 API
+// API to recursively get all child departments of a specific department
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const parentId = searchParams.get('parentId');

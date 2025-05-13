@@ -4,7 +4,7 @@ const nextConfig = {
     serverComponentsExternalPackages: [],
   },
   webpack: (config, { isServer }) => {
-    // 개발 서버의 메모리 제한 증가
+    // Increase memory limit for development server
     if (!isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',

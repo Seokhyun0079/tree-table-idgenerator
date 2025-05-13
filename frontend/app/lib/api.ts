@@ -2,7 +2,7 @@ import { Department, Employee } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// 부서 관련 API
+// Department related APIs
 export async function getDepartments(): Promise<Department[]> {
   const response = await fetch(`${API_BASE_URL}/departments`);
   if (!response.ok) {
@@ -19,6 +19,22 @@ export async function getDepartment(id: number): Promise<Department> {
   return response.json();
 }
 
+
+export async function getChildDepartmentRecursive(id: number): Promise<Department[]> {
+  const response = await fetch(`${API_BASE_URL}/departments/tree-recursive?parentId=${id}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch department');
+  }
+  return response.json();
+}
+
+export async function getChildDepartmentComparison(id: number): Promise<Department[]> {
+  const response = await fetch(`${API_BASE_URL}/departments/tree-comparison?id=${id}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch department');
+  }
+  return response.json();
+}
 export async function createDepartment(department: Omit<Department, 'id'>): Promise<Department> {
   const response = await fetch(`${API_BASE_URL}/departments`, {
     method: 'POST',
@@ -56,7 +72,7 @@ export async function deleteDepartment(id: number): Promise<void> {
   }
 }
 
-// 직원 관련 API
+// Employee related APIs
 export async function getEmployees(page: number = 1, pageSize: number = 100): Promise<Employee[]> {
   const response = await fetch(`${API_BASE_URL}/employees?page=${page}&pageSize=${pageSize}`);
   if (!response.ok) {

@@ -9,7 +9,7 @@ export function buildDepartmentTree(departments: Department[]): DepartmentNode[]
   const departmentMap = new Map<number, DepartmentNode>();
   const rootDepartments: DepartmentNode[] = [];
 
-  // 먼저 모든 부서를 맵에 추가
+  // First add all departments to the map
   departments.forEach((dept) => {
     departmentMap.set(dept.id, {
       ...dept,
@@ -18,7 +18,7 @@ export function buildDepartmentTree(departments: Department[]): DepartmentNode[]
     });
   });
 
-  // 부서 트리 구조 생성
+  // Create department tree structure
   departments.forEach((dept) => {
     const node = departmentMap.get(dept.id)!;
     if (dept.parent_id === null) {
@@ -28,7 +28,7 @@ export function buildDepartmentTree(departments: Department[]): DepartmentNode[]
       if (parent) {
         parent.children.push(node);
       } else {
-        // 부모가 없는 경우 루트로 추가
+        // If no parent, add as root
         rootDepartments.push(node);
       }
     }
@@ -63,7 +63,7 @@ export function findEmployeesInDepartmentTree(
   const departmentMap = new Map<number, Department>();
   const childDepartments = new Map<number, number[]>();
 
-  // 부서 맵과 자식 부서 관계 설정
+  // Set up department map and child department relationships
   departments.forEach(dept => {
     departmentMap.set(dept.id, dept);
     if (dept.parent_id) {
@@ -74,7 +74,7 @@ export function findEmployeesInDepartmentTree(
     }
   });
 
-  // 재귀적으로 하위 부서 ID 수집
+  // Recursively collect child department IDs
   const getAllChildDepartmentIds = (deptId: number): number[] => {
     const result = [deptId];
     const children = childDepartments.get(deptId) || [];
@@ -84,9 +84,9 @@ export function findEmployeesInDepartmentTree(
     return result;
   };
 
-  // 대상 부서와 모든 하위 부서의 ID 수집
+  // Collect IDs of target department and all its child departments
   const allDepartmentIds = getAllChildDepartmentIds(targetDepartmentId);
 
-  // 해당 부서들의 모든 부서 객체 반환
+  // Return all department objects for the collected IDs
   return departments.filter(dept => allDepartmentIds.includes(dept.id));
 } 

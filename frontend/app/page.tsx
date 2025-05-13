@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Department, Employee } from "./types";
 import {
   getDepartments,
@@ -21,6 +21,7 @@ import {
 import DepartmentTree from "./components/DepartmentTree";
 import EmployeeList from "./components/EmployeeList";
 import DepartmentManager from "./components/DepartmentManager";
+import DeparmentItem from "./components/DeparmentItem";
 
 export default function Home() {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -37,7 +38,14 @@ export default function Home() {
   const [apiCallTime, setApiCallTime] = useState<number | null>(null);
   const [renderTime, setRenderTime] = useState<number | null>(null);
   const [useClientSideProcessing, setUseClientSideProcessing] = useState(false);
+  const [
+    useDepartmentTreeClientSideProcessing,
+    setUseDepartmentTreeClientSideProcessing,
+  ] = useState(false);
 
+  const rootTree = useMemo(() => {
+    return departmentTree.filter((item) => !item.parent_id);
+  }, [departmentTree]);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -68,7 +76,7 @@ export default function Home() {
         let employees: Employee[];
 
         if (useClientSideProcessing) {
-          // 하위 부서 ID 목록 수집
+          // Collect sub-department IDs
           const departmentIds = findEmployeesInDepartmentTree(
             departments,
             [],
@@ -94,12 +102,12 @@ export default function Home() {
     };
 
     fetchDepartmentEmployees();
-  }, [selectedDepartmentId, useClientSideProcessing, departments]);
+  }, [selectedDepartmentId, useClientSideProcessing]);
 
   useEffect(() => {
     if (departmentEmployees.length > 0) {
       const renderStartTime = performance.now();
-      // 렌더링이 완료된 후 시간 측정
+      // Measure time after rendering is complete
       requestAnimationFrame(() => {
         const renderEndTime = performance.now();
         setRenderTime(renderEndTime - renderStartTime);
@@ -210,11 +218,11 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">조직도</h1>
+        <h1 className="text-3xl font-bold">Organization Chart</h1>
         <div className="flex gap-4">
           <div className="flex items-center gap-2">
             <label htmlFor="processingMode" className="text-sm">
-              처리 방식:
+              Processing Mode:
             </label>
             <select
               id="processingMode"
@@ -224,22 +232,24 @@ export default function Home() {
               }
               className="px-2 py-1 border rounded"
             >
-              <option value="server">서버 측 처리</option>
-              <option value="client">클라이언트 측 처리</option>
+              <option value="server">Recurcive SQL</option>
+              <option value="client">IN SQL</option>
             </select>
           </div>
           <button
             onClick={() => setShowDepartmentManager(!showDepartmentManager)}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
-            {showDepartmentManager ? "부서 관리 닫기" : "부서 관리"}
+            {showDepartmentManager
+              ? "Close Department Manager"
+              : "Department Manager"}
           </button>
         </div>
       </div>
 
       {showDepartmentManager ? (
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">부서 관리</h2>
+          <h2 className="text-2xl font-semibold mb-4">Department Management</h2>
           <div className="bg-white rounded-lg shadow p-4">
             <DepartmentManager
               departments={departments}
@@ -252,11 +262,45 @@ export default function Home() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <h2 className="text-2xl font-semibold mb-4">부서 구조</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Department Structure
+            </h2>
             <div className="bg-white rounded-lg shadow p-4">
               <DepartmentTree
                 departments={departmentTree}
                 onSelect={setSelectedDepartmentId}
+              />
+            </div>
+
+            <h2 className="text-2xl font-semibold mb-4">
+              Department Structure Performance
+            </h2>
+            <div className="flex items-center gap-2 mb-4">
+              <label htmlFor="processingMode" className="text-sm">
+                Department Tree Processing Mode:
+              </label>
+              <select
+                id="departmentTreeProcessingMode"
+                value={
+                  useDepartmentTreeClientSideProcessing
+                    ? "recursive"
+                    : "comparison"
+                }
+                onChange={(e) =>
+                  setUseDepartmentTreeClientSideProcessing(
+                    e.target.value === "recursive"
+                  )
+                }
+                className="px-2 py-1 border rounded"
+              >
+                <option value="recursive">Recursive SQL</option>
+                <option value="comparison">Comparison SQL</option>
+              </select>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4">
+              <DeparmentItem
+                departments={rootTree}
+                useClientSideProcessing={useDepartmentTreeClientSideProcessing}
               />
             </div>
           </div>
@@ -264,19 +308,39 @@ export default function Home() {
           <div>
             <h2 className="text-2xl font-semibold mb-4">
               {selectedDepartmentId
-                ? `직원 목록 (부서 ID: ${selectedDepartmentId})${
-                    apiCallTime || renderTime
-                      ? ` - API 호출: ${
-                          apiCallTime?.toFixed(2) ?? "-"
-                        }ms, 렌더링: ${renderTime?.toFixed(2) ?? "-"}ms${
-                          apiCallTime && renderTime
-                            ? `, 총: ${(apiCallTime + renderTime).toFixed(2)}ms`
-                            : ""
-                        }`
-                      : ""
-                  }`
-                : "직원 목록"}
+                ? `Employee List (Department ID: ${selectedDepartmentId})`
+                : "Employee List"}
             </h2>
+            {(apiCallTime || renderTime) && (
+              <div className="mb-4 p-3 bg-gray-100 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">
+                  Performance Metrics:
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">API Call Time:</p>
+                    <p className="font-semibold">
+                      {apiCallTime?.toFixed(2) ?? "-"} ms
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Rendering Time:</p>
+                    <p className="font-semibold">
+                      {renderTime?.toFixed(2) ?? "-"} ms
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm text-gray-600">Total Time:</p>
+                    <p className="font-semibold">
+                      {apiCallTime && renderTime
+                        ? (apiCallTime + renderTime).toFixed(2)
+                        : "-"}{" "}
+                      ms
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="bg-white rounded-lg shadow p-4">
               <EmployeeList
                 employees={departmentEmployees}
