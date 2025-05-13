@@ -440,7 +440,7 @@ func getDepartmentEmployees(c *gin.Context) {
 }
 
 const max_id_length int = 9
-const max_id_num int = 100000
+const max_id_num int = 10000
 
 func createDepartment(c *gin.Context) {
 	var req DepartmentRequest

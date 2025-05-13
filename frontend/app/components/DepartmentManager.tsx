@@ -98,7 +98,7 @@ export default function DepartmentManager({
                 </option>
                 {departments.map((dept) => (
                   <option key={dept.id} value={dept.id}>
-                    {dept.name}
+                    {dept.id} - {dept.parent_id} - {dept.name}
                   </option>
                 ))}
               </select>
@@ -131,44 +131,7 @@ export default function DepartmentManager({
             key={dept.id}
             className="bg-white p-4 rounded-lg shadow-sm border"
           >
-            {editingId === dept.id ? (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={dept.name}
-                  onChange={(e) =>
-                    handleEdit({ ...dept, name: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border rounded"
-                />
-                <select
-                  value={dept.parent_id || ""}
-                  onChange={(e) =>
-                    handleEdit({
-                      ...dept,
-                      parent_id: e.target.value
-                        ? parseInt(e.target.value)
-                        : null,
-                    })
-                  }
-                  className="w-full px-3 py-2 border rounded"
-                >
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex justify-end space-x-2">
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="px-3 py-1 text-gray-600 hover:text-gray-800"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
+            {
               <div className="flex justify-between items-center">
                 <div>
                   <div className="font-medium">{dept.name}</div>
@@ -176,22 +139,8 @@ export default function DepartmentManager({
                     ID: {dept.id} | Parent Department ID: {dept.parent_id}
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setEditingId(dept.id)}
-                    className="px-3 py-1 text-blue-500 hover:text-blue-600"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(dept.id)}
-                    className="px-3 py-1 text-red-500 hover:text-red-600"
-                  >
-                    Delete
-                  </button>
-                </div>
               </div>
-            )}
+            }
           </div>
         ))}
       </div>

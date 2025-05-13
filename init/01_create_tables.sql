@@ -25,10 +25,7 @@ INSERT INTO departments (id, name, parent_id) VALUES
 (4000, 'Research & Development Division', NULL),
 (5000, 'IT Division', NULL),
 (6000, 'HR & General Affairs Division', NULL),
-(7000, 'Finance & Accounting Division', NULL),
-(8000, 'Quality Control Division', NULL),
-(9000, 'International Business Division', NULL),
-(10000, 'Strategic Planning Division', NULL);
+(7000, 'Finance & Accounting Division', NULL);
 
 -- Create first-level departments (3 for each division)
 INSERT INTO departments (id, name, parent_id) VALUES
@@ -65,22 +62,7 @@ INSERT INTO departments (id, name, parent_id) VALUES
 -- Finance & Accounting Division
 (6900, 'Finance Team', 7000),
 (6800, 'Accounting Team', 7000),
-(6700, 'Tax Team', 7000),
-
--- Quality Control Division
-(7900, 'Quality Assurance Team', 8000),
-(7800, 'Inspection Team', 8000),
-(7700, 'Environment & Safety Team', 8000),
-
--- International Business Division
-(8900, 'Asia Region Team', 9000),
-(8800, 'Europe Region Team', 9000),
-(8700, 'Americas Region Team', 9000),
-
--- Strategic Planning Division
-(9900, 'Strategic Planning Team', 10000),
-(9800, 'Business Development Team', 10000),
-(9700, 'Investment Management Team', 10000);
+(6700, 'Tax Team', 7000);
 
 -- Create second-level departments (2-3 for each first-level department)
 INSERT INTO departments (id, name, parent_id) VALUES
@@ -158,11 +140,8 @@ INSERT INTO departments (id, name, parent_id) VALUES
 
 -- Strategic Planning Division second-level
 (9890, 'Strategic Planning 1 Team', 9900),
-(9880, 'Strategic Planning 2 Team', 9900),
-(9790, 'Business Development 1 Team', 9800),
-(9780, 'Business Development 2 Team', 9800),
-(9690, 'Investment Management 1 Team', 9700),
-(9680, 'Investment Management 2 Team', 9700);
+(9880, 'Business Development Team', 9900),
+(9790, 'Investment Management Team', 9900);
 
 -- Create third-level departments (2-3 for each second-level department)
 INSERT INTO departments (id, name, parent_id) VALUES
@@ -264,47 +243,6 @@ INSERT INTO departments (id, name, parent_id) VALUES
 (6679, 'Tax Planning 1 Team', 6680),
 (6678, 'Tax Planning 2 Team', 6680),
 
--- Quality Control Division third-level
-(7889, 'Quality Assurance 1-1 Team', 7890),
-(7888, 'Quality Assurance 1-2 Team', 7890),
-(7879, 'Quality Assurance 2-1 Team', 7880),
-(7878, 'Quality Assurance 2-2 Team', 7880),
-(7789, 'Inspection Management 1 Team', 7790),
-(7788, 'Inspection Management 2 Team', 7790),
-(7779, 'Inspection Operations 1 Team', 7780),
-(7778, 'Inspection Operations 2 Team', 7780),
-(7689, 'Environment Management 1 Team', 7690),
-(7688, 'Environment Management 2 Team', 7690),
-(7679, 'Safety Management 1 Team', 7680),
-(7678, 'Safety Management 2 Team', 7680),
-
--- International Business Division third-level
-(8889, 'East Asia 1 Team', 8890),
-(8888, 'East Asia 2 Team', 8890),
-(8879, 'Southeast Asia 1 Team', 8880),
-(8878, 'Southeast Asia 2 Team', 8880),
-(8789, 'Western Europe 1 Team', 8790),
-(8788, 'Western Europe 2 Team', 8790),
-(8779, 'Eastern Europe 1 Team', 8780),
-(8778, 'Eastern Europe 2 Team', 8780),
-(8689, 'North America 1 Team', 8690),
-(8688, 'North America 2 Team', 8690),
-(8679, 'South America 1 Team', 8680),
-(8678, 'South America 2 Team', 8680),
-
--- Strategic Planning Division third-level
-(9889, 'Strategic Planning 1-1 Team', 9890),
-(9888, 'Strategic Planning 1-2 Team', 9890),
-(9879, 'Strategic Planning 2-1 Team', 9880),
-(9878, 'Strategic Planning 2-2 Team', 9880),
-(9789, 'Business Development 1-1 Team', 9790),
-(9788, 'Business Development 1-2 Team', 9790),
-(9779, 'Business Development 2-1 Team', 9780),
-(9778, 'Business Development 2-2 Team', 9780),
-(9689, 'Investment Management 1-1 Team', 9690),
-(9688, 'Investment Management 1-2 Team', 9690),
-(9679, 'Investment Management 2-1 Team', 9680),
-(9678, 'Investment Management 2-2 Team', 9680);
 
 -- Add more employees to reach 100000 (using a stored procedure)
 DELIMITER //
@@ -327,9 +265,6 @@ BEGIN
                 WHEN id = 5000 THEN 'IT'  -- IT Division
                 WHEN id = 6000 THEN 'HR'  -- HR Division
                 WHEN id = 7000 THEN 'FA'  -- Finance & Accounting
-                WHEN id = 8000 THEN 'QC'  -- Quality Control
-                WHEN id = 9000 THEN 'IB'  -- International Business
-                WHEN id = 10000 THEN 'SP' -- Strategic Planning
                 ELSE CONCAT('D', LPAD(SUBSTRING(id, 1, 2), 2, '0'))
             END as prefix
         FROM departments;
