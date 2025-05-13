@@ -120,7 +120,7 @@ INSERT INTO departments (id, name, parent_id) VALUES
 (6790, 'Accounting Management Team', 6800),
 (6780, 'Financial Accounting Team', 6800),
 (6690, 'Tax Management Team', 6700),
-(6680, 'Tax Planning Team', 6700),
+(6680, 'Tax Planning Team', 6700);
 
 -- Create third-level departments (2-3 for each second-level department)
 INSERT INTO departments (id, name, parent_id) VALUES
@@ -220,8 +220,7 @@ INSERT INTO departments (id, name, parent_id) VALUES
 (6689, 'Tax Management 1 Team', 6690),
 (6688, 'Tax Management 2 Team', 6690),
 (6679, 'Tax Planning 1 Team', 6680),
-(6678, 'Tax Planning 2 Team', 6680),
-
+(6678, 'Tax Planning 2 Team', 6680);
 
 -- Add more employees to reach 100000 (using a stored procedure)
 DELIMITER //
@@ -244,6 +243,9 @@ BEGIN
                 WHEN id = 5000 THEN 'IT'  -- IT Division
                 WHEN id = 6000 THEN 'HR'  -- HR Division
                 WHEN id = 7000 THEN 'FA'  -- Finance & Accounting
+                WHEN id = 8000 THEN 'QC'  -- Quality Control
+                WHEN id = 9000 THEN 'IB'  -- International Business
+                WHEN id = 10000 THEN 'SP' -- Strategic Planning
                 ELSE CONCAT('D', LPAD(SUBSTRING(id, 1, 2), 2, '0'))
             END as prefix
         FROM departments;
