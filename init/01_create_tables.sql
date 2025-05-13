@@ -122,27 +122,6 @@ INSERT INTO departments (id, name, parent_id) VALUES
 (6690, 'Tax Management Team', 6700),
 (6680, 'Tax Planning Team', 6700),
 
--- Quality Control Division second-level
-(7890, 'Quality Assurance 1 Team', 7900),
-(7880, 'Quality Assurance 2 Team', 7900),
-(7790, 'Inspection Management Team', 7800),
-(7780, 'Inspection Operations Team', 7800),
-(7690, 'Environment Management Team', 7700),
-(7680, 'Safety Management Team', 7700),
-
--- International Business Division second-level
-(8890, 'East Asia Team', 8900),
-(8880, 'Southeast Asia Team', 8900),
-(8790, 'Western Europe Team', 8800),
-(8780, 'Eastern Europe Team', 8800),
-(8690, 'North America Team', 8700),
-(8680, 'South America Team', 8700),
-
--- Strategic Planning Division second-level
-(9890, 'Strategic Planning 1 Team', 9900),
-(9880, 'Business Development Team', 9900),
-(9790, 'Investment Management Team', 9900);
-
 -- Create third-level departments (2-3 for each second-level department)
 INSERT INTO departments (id, name, parent_id) VALUES
 -- Management Support Division third-level
