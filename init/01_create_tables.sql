@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS departments (
     id INT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     parent_id INT,
-    FOREIGN KEY (parent_id) REFERENCES departments(id)
+    FOREIGN KEY (parent_id) REFERENCES departments(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS employees (
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS employees (
     department_id INT NOT NULL,
     hire_date DATE NOT NULL,
     large_text LONGTEXT,
-    FOREIGN KEY (department_id) REFERENCES departments(id)
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
 );
 
 -- Create top-level departments (1000~10000)

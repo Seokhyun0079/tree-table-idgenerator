@@ -34,7 +34,7 @@ services:
       - DB_PASSWORD=rootpassword
       - DB_NAME=mydatabase
       - DB_RETRY_INTERVAL=10
-      - DB_MAX_RETRIES=30
+      - DB_MAX_RETRIES=100
     depends_on:
       db:
         condition: service_healthy

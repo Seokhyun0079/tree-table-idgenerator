@@ -87,6 +87,9 @@ export default function Home() {
           employees = await getDepartmentEmployees(selectedDepartmentId);
         }
 
+        if (!employees) {
+          employees = [];
+        }
         const apiEndTime = performance.now();
         setApiCallTime(apiEndTime - startTime);
         setDepartmentEmployees(employees);

@@ -232,8 +232,8 @@ export default function EmployeeList({
       {employees.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           {departmentId
-            ? "해당 부서에 소속된 직원이 없습니다."
-            : "부서를 선택하여 직원 목록을 확인하세요."}
+            ? "No employees belong to this department."
+            : "Please select a department to view employee list."}
         </div>
       )}
     </div>

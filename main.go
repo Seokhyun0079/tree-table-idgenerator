@@ -135,6 +135,7 @@ func main() {
 		api.GET("/departments/:id", getDepartment)
 		api.GET("/departments/:id/employees", getDepartmentEmployees)
 		api.POST("/departments", createDepartment)
+		api.DELETE("/departments/:id", deleteDepartment)
 
 		// Employee related APIs
 		api.GET("/employees", getEmployees)
@@ -178,6 +179,7 @@ func getDepartmentTreeByComparison(c *gin.Context) {
 	REPEAT(CONCAT(id, name, parent_id), 200000) as virtual_column
 	FROM departments
 	WHERE id <= ? and id > ?
+	ORDER BY id, parent_id;
 	`
 	log.Printf("Executing query: %s with parameters: id=%s, idInt-increment=%d", query, id, idInt-increment)
 	rows, err := db.Query(query, id, idInt-increment)
@@ -237,7 +239,7 @@ func getDepartmentTree(c *gin.Context) {
 		FROM department_tree d1
 		LEFT JOIN department_tree d2 ON d1.id = d2.id AND d1.path > d2.path
 		WHERE d2.id IS NULL
-		ORDER BY d1.level, d1.parent_id, d1.id;
+		ORDER BY d1.id, d1.parent_id;
 	`
 
 	rows, err := db.Query(query, parentId)
@@ -628,6 +630,67 @@ func getEmployees(c *gin.Context) {
 	}
 
 	c.JSON(200, employees)
+}
+
+func deleteDepartment(c *gin.Context) {
+	id := c.Param("id")
+	log.Printf("Deleting department with id: %v", id)
+
+	// 트랜잭션 시작
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("Error starting transaction: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+	defer tx.Rollback() // 에러 발생시 롤백
+
+	// 부서가 존재하는지 확인
+	var exists bool
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM departments WHERE id = ?)", id).Scan(&exists)
+	if err != nil {
+		log.Printf("Error checking department existence: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to check department existence"})
+		return
+	}
+
+	if !exists {
+		c.JSON(404, gin.H{"error": "Department not found"})
+		return
+	}
+
+	// 부서 삭제
+	result, err := tx.Exec("DELETE FROM departments WHERE id = ?", id)
+	if err != nil {
+		log.Printf("Error deleting department: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to delete department"})
+		return
+	}
+
+	// 삭제된 행 수 확인
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to verify deletion"})
+		return
+	}
+
+	if rowsAffected == 0 {
+		c.JSON(404, gin.H{"error": "Department not found"})
+		return
+	}
+
+	// 트랜잭션 커밋
+	if err = tx.Commit(); err != nil {
+		log.Printf("Error committing transaction: %v", err)
+		c.JSON(500, gin.H{"error": "Failed to commit transaction"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Department and its employees deleted successfully",
+		"rows_affected": rowsAffected,
+	})
 }
 
 // Get specific employee

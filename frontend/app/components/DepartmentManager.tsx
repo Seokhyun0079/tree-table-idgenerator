@@ -139,6 +139,12 @@ export default function DepartmentManager({
                     ID: {dept.id} | Parent Department ID: {dept.parent_id}
                   </div>
                 </div>
+                <button
+                  onClick={() => handleDelete(dept.id)}
+                  className="px-3 py-1 text-red-500 hover:text-red-600"
+                >
+                  Delete
+                </button>
               </div>
             }
           </div>
